@@ -1,0 +1,1941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie Survival Strategy</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000;
+            touch-action: manipulation;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .ui-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .ui-overlay * {
+            pointer-events: auto;
+        }
+        
+        .resource-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 5px 15px;
+            color: white;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .resource i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .bottom-menu {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+        
+        .menu-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            border: 2px solid #555;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .menu-btn:hover, .menu-btn.active {
+            border-color: #59ea3a;
+            transform: scale(1.1);
+        }
+        
+        .side-menu {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .side-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            border: 2px solid #555;
+            cursor: pointer;
+        }
+        
+        .side-btn:hover {
+            border-color: #59ea3a;
+        }
+        
+        .modal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(30, 30, 30, 0.9);
+            border: 2px solid #59ea3a;
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #59ea3a;
+            padding-bottom: 10px;
+        }
+        
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .building {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .building:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        
+        .building-image {
+            width: 60px;
+            height: 60px;
+            background-size: cover;
+            border-radius: 5px;
+        }
+        
+        .building-label {
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            font-size: 12px;
+            margin-top: 2px;
+            text-align: center;
+        }
+        
+        .hero-card {
+            display: flex;
+            border: 1px solid #444;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .hero-card:hover {
+            border-color: #59ea3a;
+            background: rgba(89, 234, 58, 0.1);
+        }
+        
+        .hero-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #333;
+            margin-right: 10px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+        }
+        
+        .hero-details {
+            flex: 1;
+        }
+        
+        .hero-stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.8rem;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            margin-top: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        
+        .tech-tree {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .tech-item {
+            background: rgba(50, 50, 50, 0.7);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tech-item:hover {
+            background: rgba(70, 70, 70, 0.7);
+        }
+        
+        .tech-item.locked {
+            filter: grayscale(1);
+            opacity: 0.6;
+        }
+        
+        .tech-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        
+        .tech-name {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .mission-card {
+            background: rgba(50, 50, 50, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .mission-title {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .mission-progress {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        
+        .mission-rewards {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .reward {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        .inventory-item {
+            background: rgba(50, 50, 50, 0.7);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .item-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        
+        .item-count {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+        }
+        
+        .building-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .building-option {
+            background: rgba(50, 50, 50, 0.7);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .building-option:hover {
+            background: rgba(70, 70, 70, 0.7);
+        }
+        
+        .building-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        
+        .building-cost {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .notification {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .zombie {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #b30000;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s;
+        }
+        
+        .health-bar {
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: #59ea3a;
+            transition: width 0.3s;
+        }
+        
+        .zombie .health-fill {
+            background: #ff4c4c;
+        }
+        
+        .hero {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #2c7cb0;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .hero:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        
+        .attack-animation {
+            animation: attack 0.5s forwards;
+        }
+        
+        @keyframes attack {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        .damage-text {
+            position: absolute;
+            color: red;
+            font-weight: bold;
+            font-size: 1.2rem;
+            animation: float-up 1s forwards;
+            text-shadow: 1px 1px 2px black;
+        }
+        
+        @keyframes float-up {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-30px); opacity: 0; }
+        }
+        
+        .day-night-indicator {
+            position: absolute;
+            top: 10px;
+            right: 70px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 5px 15px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .level-indicator {
+            position: absolute;
+            top: 55px;
+            right: 70px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 5px 15px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .resource-bar {
+                flex-wrap: wrap;
+                width: calc(100% - 20px);
+                justify-content: space-between;
+            }
+            
+            .bottom-menu {
+                gap: 10px;
+            }
+            
+            .menu-btn {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .tech-tree {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .inventory-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .start-menu {
+            background: rgba(30, 30, 30, 0.9);
+            border: 2px solid #59ea3a;
+            color: white;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .start-menu h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #59ea3a;
+        }
+        
+        .start-btn {
+            background: #59ea3a;
+            color: #000;
+            padding: 10px 30px;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        
+        .start-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #59ea3a;
+        }
+        
+        .alliance-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .alliance-item {
+            display: flex;
+            padding: 10px;
+            border-bottom: 1px solid #444;
+            cursor: pointer;
+        }
+        
+        .alliance-item:hover {
+            background: rgba(89, 234, 58, 0.1);
+        }
+        
+        .alliance-logo {
+            width: 50px;
+            height: 50px;
+            background: #333;
+            border-radius: 8px;
+            margin-right: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+        }
+        
+        .alliance-members {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="ui-overlay">
+            <div class="resource-bar">
+                <div class="resource">
+                    <i class="fas fa-utensils"></i>
+                    <span id="food-count">200</span>
+                </div>
+                <div class="resource">
+                    <i class="fas fa-hammer"></i>
+                    <span id="materials-count">150</span>
+                </div>
+                <div class="resource">
+                    <i class="fas fa-bolt"></i>
+                    <span id="energy-count">100</span>
+                </div>
+                <div class="resource">
+                    <i class="fas fa-coins"></i>
+                    <span id="gold-count">50</span>
+                </div>
+            </div>
+            
+            <div class="day-night-indicator">
+                <i id="day-night-icon" class="fas fa-sun"></i>
+                <span id="day-night-text">Day 1</span>
+            </div>
+            
+            <div class="level-indicator">
+                <i class="fas fa-star"></i>
+                <span>Level <span id="player-level">1</span></span>
+            </div>
+            
+            <div class="bottom-menu">
+                <div class="menu-btn" data-modal="buildModal">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="menu-btn" data-modal="heroesModal">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="menu-btn" data-modal="researchModal">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <div class="menu-btn" data-modal="missionsModal">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="menu-btn" data-modal="inventoryModal">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <div class="menu-btn" data-modal="allianceModal">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            
+            <div class="side-menu">
+                <div class="side-btn" id="zoomInBtn">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="side-btn" id="zoomOutBtn">
+                    <i class="fas fa-minus"></i>
+                </div>
+                <div class="side-btn" id="centerBtn">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="side-btn" id="settingsBtn">
+                    <i class="fas fa-cog"></i>
+                </div>
+            </div>
+            
+            <!-- Build Modal -->
+            <div id="buildModal" class="modal">
+                <div class="modal-header">
+                    <h2>Build</h2>
+                    <div class="modal-close">&times;</div>
+                </div>
+                <div class="building-options">
+                    <div class="building-option" data-building="headquarters">
+                        <div class="building-icon"><i class="fas fa-university"></i></div>
+                        <div class="building-name">Headquarters</div>
+                        <div class="building-cost">
+                            <span><i class="fas fa-hammer"></i> 100</span>
+                            <span><i class="fas fa-coins"></i> 50</span>
+                        </div>
+                    </div>
+                    <div class="building-option" data-building="farm">
+                        <div class="building-icon"><i class="fas fa-wheat-awn"></i></div>
+                        <div class="building-name">Farm</div>
+                        <div class="building-cost">
+                            <span><i class="fas fa-hammer"></i> 75</span>
+                            <span><i class="fas fa-coins"></i> 20</span>
+                        </div>
+                    </div>
+                    <div class="building-option" data-building="warehouse">
+                        <div class="building-icon"><i class="fas fa-warehouse"></i></div>
+                        <div class="building-name">Warehouse</div>
+                        <div class="building-cost">
+                            <span><i class="fas fa-hammer"></i> 80</span>
+                            <span><i class="fas fa-coins"></i> 30</span>
+                        </div>
+                    </div>
+                    <div class="building-option" data-building="barracks">
+                        <div class="building-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="building-name">Barracks</div>
+                        <div class="building-cost">
+                            <span><i class="fas fa-hammer"></i> 120</span>
+                            <span><i class="fas fa-coins"></i> 40</span>
+                        </div>
+                    </div>
+                    <div class="building-option" data-building="powerPlant">
+                        <div class="building-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="building-name">Power Plant</div>
+                        <div class="building-cost">
+                            <span><i class="fas fa-hammer"></i> 150</span>
+                            <span><i class="fas fa-coins"></i> 60</span>
+                        </div>
+                    </div>
+                    <div class="building-option" data-building="wall">
+                        <div class="building-icon"><i class="fas fa-archway"></i></div>
+                        <div class="building-name">Wall</div>
+                        <div class="building-cost">
+                            <span><i class="fas fa-hammer"></i> 90</span>
+                            <span><i class="fas fa-coins"></i> 30</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Heroes Modal -->
+            <div id="heroesModal" class="modal">
+                <div class="modal-header">
+                    <h2>Heroes</h2>
+                    <div class="modal-close">&times;</div>
+                </div>
+                <div id="heroes-container">
+                    <div class="hero-card" data-hero="soldier">
+                        <div class="hero-image"></div>
+                        <div class="hero-details">
+                            <div class="hero-name">Sergeant Walker</div>
+                            <div class="hero-level">Level 3</div>
+                            <div class="hero-stats">
+                                <div class="stat"><i class="fas fa-fist-raised"></i> 35</div>
+                                <div class="stat"><i class="fas fa-heartbeat"></i> 150</div>
+                                <div class="stat"><i class="fas fa-running"></i> 30</div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 45%; background-color: #4CAF50;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-card" data-hero="medic">
+                        <div class="hero-image"></div>
+                        <div class="hero-details">
+                            <div class="hero-name">Dr. Harper</div>
+                            <div class="hero-level">Level 2</div>
+                            <div class="hero-stats">
+                                <div class="stat"><i class="fas fa-fist-raised"></i> 20</div>
+                                <div class="stat"><i class="fas fa-heartbeat"></i> 120</div>
+                                <div class="stat"><i class="fas fa-running"></i> 35</div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 30%; background-color: #4CAF50;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-card" data-hero="hunter">
+                        <div class="hero-image"></div>
+                        <div class="hero-details">
+                            <div class="hero-name">Archer Quinn</div>
+                            <div class="hero-level">Level 1</div>
+                            <div class="hero-stats">
+                                <div class="stat"><i class="fas fa-fist-raised"></i> 40</div>
+                                <div class="stat"><i class="fas fa-heartbeat"></i> 100</div>
+                                <div class="stat"><i class="fas fa-running"></i> 40</div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 15%; background-color: #4CAF50;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Research Modal -->
+            <div id="researchModal" class="modal">
+                <div class="modal-header">
+                    <h2>Research</h2>
+                    <div class="modal-close">&times;</div>
+                </div>
+                <div class="tech-tree">
+                    <div class="tech-item" data-tech="agriculture">
+                        <div class="tech-icon"><i class="fas fa-seedling"></i></div>
+                        <div class="tech-name">Agriculture</div>
+                        <div class="tech-level">Level 1</div>
+                    </div>
+                    <div class="tech-item" data-tech="construction">
+                        <div class="tech-icon"><i class="fas fa-hard-hat"></i></div>
+                        <div class="tech-name">Construction</div>
+                        <div class="tech-level">Level 1</div>
+                    </div>
+                    <div class="tech-item locked" data-tech="medicine">
+                        <div class="tech-icon"><i class="fas fa-medkit"></i></div>
+                        <div class="tech-name">Medicine</div>
+                        <div class="tech-level">Locked</div>
+                    </div>
+                    <div class="tech-item locked" data-tech="warfare">
+                        <div class="tech-icon"><i class="fas fa-crosshairs"></i></div>
+                        <div class="tech-name">Warfare</div>
+                        <div class="tech-level">Locked</div>
+                    </div>
+                    <div class="tech-item locked" data-tech="engineering">
+                        <div class="tech-icon"><i class="fas fa-cogs"></i></div>
+                        <div class="tech-name">Engineering</div>
+                        <div class="tech-level">Locked</div>
+                    </div>
+                    <div class="tech-item locked" data-tech="energy">
+                        <div class="tech-icon"><i class="fas fa-plug"></i></div>
+                        <div class="tech-name">Energy</div>
+                        <div class="tech-level">Locked</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Missions Modal -->
+            <div id="missionsModal" class="modal">
+                <div class="modal-header">
+                    <h2>Missions</h2>
+                    <div class="modal-close">&times;</div>
+                </div>
+                <div id="missions-container">
+                    <div class="mission-card" data-mission="build">
+                        <div class="mission-title">
+                            <div class="mission-name">Build Your Base</div>
+                            <div class="mission-status">In Progress</div>
+                        </div>
+                        <div class="mission-desc">Construct 3 buildings in your base</div>
+                        <div class="mission-progress">1/3 completed</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 33%; background-color: #4CAF50;"></div>
+                        </div>
+                        <div class="mission-rewards">
+                            <div class="reward"><i class="fas fa-coins"></i> 100</div>
+                            <div class="reward"><i class="fas fa-hammer"></i> 150</div>
+                        </div>
+                    </div>
+                    <div class="mission-card" data-mission="defend">
+                        <div class="mission-title">
+                            <div class="mission-name">Defend the Gate</div>
+                            <div class="mission-status">Available</div>
+                        </div>
+                        <div class="mission-desc">Defeat 20 zombies attacking your base</div>
+                        <div class="mission-progress">0/20 defeated</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%; background-color: #4CAF50;"></div>
+                        </div>
+                        <div class="mission-rewards">
+                            <div class="reward"><i class="fas fa-coins"></i> 200</div>
+                            <div class="reward"><i class="fas fa-user-shield"></i> Hero XP</div>
+                        </div>
+                    </div>
+                    <div class="mission-card" data-mission="research">
+                        <div class="mission-title">
+                            <div class="mission-name">Scientific Progress</div>
+                            <div class="mission-status">Available</div>
+                        </div>
+                        <div class="mission-desc">Research 2 technologies</div>
+                        <div class="mission-progress">0/2 completed</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%; background-color: #4CAF50;"></div>
+                        </div>
+                        <div class="mission-rewards">
+                            <div class="reward"><i class="fas fa-coins"></i> 150</div>
+                            <div class="reward"><i class="fas fa-flask"></i> Unlock Medicine</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Inventory Modal -->
+            <div id="inventoryModal" class="modal">
+                <div class="modal-header">
+                    <h2>Inventory</h2>
+                    <div class="modal-close">&times;</div>
+                </div>
+                <div class="inventory-grid">
+                    <div class="inventory-item">
+                        <div class="item-icon"><i class="fas fa-first-aid"></i></div>
+                        <div class="item-name">Medkit</div>
+                        <div class="item-count">x3</div>
+                    </div>
+                    <div class="inventory-item">
+                        <div class="item-icon"><i class="fas fa-hammer"></i></div>
+                        <div class="item-name">Toolbox</div>
+                        <div class="item-count">x1</div>
+                    </div>
+                    <div class="inventory-item">
+                        <div class="item-icon"><i class="fas fa-bread-slice"></i></div>
+                        <div class="item-name">Ration Pack</div>
+                        <div class="item-count">x5</div>
+                    </div>
+                    <div class="inventory-item">
+                        <div class="item-icon"><i class="fas fa-vial"></i></div>
+                        <div class="item-name">Antidote</div>
+                        <div class="item-count">x2</div>
+                    </div>
+                    <div class="inventory-item">
+                        <div class="item-icon"><i class="fas fa-gun"></i></div>
+                        <div class="item-name">Pistol Parts</div>
+                        <div class="item-count">x3</div>
+                    </div>
+                    <div class="inventory-item">
+                        <div class="item-icon"><i class="fas fa-map"></i></div>
+                        <div class="item-name">City Map</div>
+                        <div class="item-count">x1</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alliance Modal -->
+            <div id="allianceModal" class="modal">
+                <div class="modal-header">
+                    <h2>Alliances</h2>
+                    <div class="modal-close">&times;</div>
+                </div>
+                <div id="alliance-container">
+                    <p class="mb-3">Join an alliance to work together with other survivors:</p>
+                    <div class="alliance-list">
+                        <div class="alliance-item">
+                            <div class="alliance-logo"><i class="fas fa-skull"></i></div>
+                            <div class="alliance-info">
+                                <div class="alliance-name">Skull Crushers</div>
+                                <div class="alliance-members">Members: 24/30</div>
+                            </div>
+                        </div>
+                        <div class="alliance-item">
+                            <div class="alliance-logo"><i class="fas fa-shield-alt"></i></div>
+                            <div class="alliance-info">
+                                <div class="alliance-name">Survivors United</div>
+                                <div class="alliance-members">Members: 18/30</div>
+                            </div>
+                        </div>
+                        <div class="alliance-item">
+                            <div class="alliance-logo"><i class="fas fa-fire"></i></div>
+                            <div class="alliance-info">
+                                <div class="alliance-name">Phoenix Rising</div>
+                                <div class="alliance-members">Members: 12/30</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button id="create-alliance-btn" class="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Create New Alliance</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="notification" id="notification"></div>
+        </div>
+        
+        <div class="game-overlay" id="startOverlay">
+            <div class="start-menu">
+                <h1>Zombie Survival</h1>
+                <p>Build your base, recruit heroes, and survive the zombie apocalypse!</p>
+                <div class="start-btn" id="startGameBtn">Start Game</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game initialization and settings
+        const gameCanvas = document.getElementById('gameCanvas');
+        const ctx = gameCanvas.getContext('2d');
+        const gameContainer = document.getElementById('game-container');
+        
+        // Set canvas dimensions
+        function resizeCanvas() {
+            gameCanvas.width = window.innerWidth;
+            gameCanvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Game state
+        const gameState = {
+            resources: {
+                food: 200,
+                materials: 150,
+                energy: 100,
+                gold: 50
+            },
+            dayNight: {
+                isDayTime: true,
+                cycle: 0,
+                dayLength: 60, // in seconds
+                currentTime: 0
+            },
+            camera: {
+                x: gameCanvas.width / 2,
+                y: gameCanvas.height / 2,
+                zoom: 1,
+                targetX: gameCanvas.width / 2,
+                targetY: gameCanvas.height / 2,
+                targetZoom: 1,
+                speed: 0.1
+            },
+            buildings: [
+                {
+                    type: 'headquarters',
+                    x: gameCanvas.width / 2,
+                    y: gameCanvas.height / 2,
+                    level: 1,
+                    health: 500,
+                    maxHealth: 500,
+                    icon: ''
+                }
+            ],
+            heroes: [
+                {
+                    type: 'soldier',
+                    name: 'Sergeant Walker',
+                    level: 3,
+                    attack: 35,
+                    health: 150,
+                    maxHealth: 150,
+                    speed: 30,
+                    x: gameCanvas.width / 2 - 80,
+                    y: gameCanvas.height / 2 - 50,
+                    icon: '',
+                    isDeployed: true,
+                    targetX: null,
+                    targetY: null,
+                    isMoving: false
+                },
+                {
+                    type: 'medic',
+                    name: 'Dr. Harper',
+                    level: 2,
+                    attack: 20,
+                    health: 120,
+                    maxHealth: 120,
+                    speed: 35,
+                    x: gameCanvas.width / 2 + 80,
+                    y: gameCanvas.height / 2 - 50,
+                    icon: '',
+                    isDeployed: true,
+                    targetX: null,
+                    targetY: null,
+                    isMoving: false
+                }
+            ],
+            zombies: [],
+            player: {
+                level: 1,
+                experience: 0,
+                nextLevelExp: 1000
+            },
+            missions: {
+                build: { progress: 1, target: 3, completed: false },
+                defend: { progress: 0, target: 20, completed: false },
+                research: { progress: 0, target: 2, completed: false }
+            },
+            research: {
+                agriculture: { level: 1, maxLevel: 3, unlocked: true },
+                construction: { level: 1, maxLevel: 3, unlocked: true },
+                medicine: { level: 0, maxLevel: 3, unlocked: false },
+                warfare: { level: 0, maxLevel: 3, unlocked: false },
+                engineering: { level: 0, maxLevel: 3, unlocked: false },
+                energy: { level: 0, maxLevel: 3, unlocked: false }
+            },
+            isPlacingBuilding: false,
+            currentBuildingType: null,
+            lastZombieSpawn: 0,
+            zombieSpawnRate: 5000, // milliseconds
+            gameTime: 0,
+            isGameStarted: false
+        };
+        
+        // UI elements
+        const modals = document.querySelectorAll('.modal');
+        const modalButtons = document.querySelectorAll('[data-modal]');
+        const closeButtons = document.querySelectorAll('.modal-close');
+        const notification = document.getElementById('notification');
+        const startOverlay = document.getElementById('startOverlay');
+        const startGameBtn = document.getElementById('startGameBtn');
+        
+        // Building option event listeners
+        const buildingOptions = document.querySelectorAll('.building-option');
+        buildingOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const buildingType = option.getAttribute('data-building');
+                
+                // Check if player has enough resources
+                let materialsCost, goldCost;
+                
+                switch(buildingType) {
+                    case 'headquarters':
+                        materialsCost = 100;
+                        goldCost = 50;
+                        break;
+                    case 'farm':
+                        materialsCost = 75;
+                        goldCost = 20;
+                        break;
+                    case 'warehouse':
+                        materialsCost = 80;
+                        goldCost = 30;
+                        break;
+                    case 'barracks':
+                        materialsCost = 120;
+                        goldCost = 40;
+                        break;
+                    case 'powerPlant':
+                        materialsCost = 150;
+                        goldCost = 60;
+                        break;
+                    case 'wall':
+                        materialsCost = 90;
+                        goldCost = 30;
+                        break;
+                    default:
+                        materialsCost = 100;
+                        goldCost = 40;
+                }
+                
+                if (gameState.resources.materials < materialsCost || gameState.resources.gold < goldCost) {
+                    showNotification("Not enough resources!");
+                    return;
+                }
+                
+                closeAllModals();
+                gameState.isPlacingBuilding = true;
+                gameState.currentBuildingType = buildingType;
+                showNotification("Select a location to place your building");
+            });
+        });
+        
+        // Modal functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'block';
+        }
+        
+        function closeModal(modal) {
+            modal.style.display = 'none';
+        }
+        
+        function closeAllModals() {
+            modals.forEach(modal => {
+                closeModal(modal);
+            });
+        }
+        
+        // Event listeners for modal buttons
+        modalButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const modalId = button.getAttribute('data-modal');
+                openModal(modalId);
+            });
+        });
+        
+        // Event listeners for modal close buttons
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                closeAllModals();
+            });
+        });
+        
+        // Show notification function
+        function showNotification(message, duration = 3000) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, duration);
+        }
+        
+        // Canvas click handler
+        gameCanvas.addEventListener('click', handleCanvasClick);
+        
+        function handleCanvasClick(event) {
+            const rect = gameCanvas.getBoundingClientRect();
+            const clickX = (event.clientX - rect.left) / gameState.camera.zoom + gameState.camera.x - gameCanvas.width / 2 / gameState.camera.zoom;
+            const clickY = (event.clientY - rect.top) / gameState.camera.zoom + gameState.camera.y - gameCanvas.height / 2 / gameState.camera.zoom;
+            
+            if (gameState.isPlacingBuilding) {
+                // Place building
+                const newBuilding = {
+                    type: gameState.currentBuildingType,
+                    x: clickX,
+                    y: clickY,
+                    level: 1,
+                    health: 300,
+                    maxHealth: 300
+                };
+                
+                // Set building icon
+                switch(newBuilding.type) {
+                    case 'headquarters':
+                        newBuilding.icon = '';
+                        break;
+                    case 'farm':
+                        newBuilding.icon = '';
+                        break;
+                    case 'warehouse':
+                        newBuilding.icon = '';
+                        break;
+                    case 'barracks':
+                        newBuilding.icon = '';
+                        break;
+                    case 'powerPlant':
+                        newBuilding.icon = '';
+                        break;
+                    case 'wall':
+                        newBuilding.icon = '';
+                        break;
+                    default:
+                        newBuilding.icon = '';
+                }
+                
+                // Deduct resources
+                let materialsCost, goldCost;
+                
+                switch(newBuilding.type) {
+                    case 'headquarters':
+                        materialsCost = 100;
+                        goldCost = 50;
+                        break;
+                    case 'farm':
+                        materialsCost = 75;
+                        goldCost = 20;
+                        break;
+                    case 'warehouse':
+                        materialsCost = 80;
+                        goldCost = 30;
+                        break;
+                    case 'barracks':
+                        materialsCost = 120;
+                        goldCost = 40;
+                        break;
+                    case 'powerPlant':
+                        materialsCost = 150;
+                        goldCost = 60;
+                        break;
+                    case 'wall':
+                        materialsCost = 90;
+                        goldCost = 30;
+                        break;
+                    default:
+                        materialsCost = 100;
+                        goldCost = 40;
+                }
+                
+                gameState.resources.materials -= materialsCost;
+                gameState.resources.gold -= goldCost;
+                
+                gameState.buildings.push(newBuilding);
+                gameState.isPlacingBuilding = false;
+                gameState.currentBuildingType = null;
+                
+                // Update mission progress
+                if (!gameState.missions.build.completed) {
+                    gameState.missions.build.progress++;
+                    if (gameState.missions.build.progress >= gameState.missions.build.target) {
+                        gameState.missions.build.completed = true;
+                        showNotification("Mission completed: Build Your Base");
+                        gameState.resources.materials += 150;
+                        gameState.resources.gold += 100;
+                    }
+                }
+                
+                updateResourceDisplay();
+                showNotification("Building placed!");
+                return;
+            }
+            
+            // Check if a hero was clicked
+            for (let i = 0; i < gameState.heroes.length; i++) {
+                const hero = gameState.heroes[i];
+                const distance = Math.sqrt(Math.pow(hero.x - clickX, 2) + Math.pow(hero.y - clickY, 2));
+                
+                if (distance < 25) {
+                    // If hero is clicked, open hero details modal
+                    openModal("heroesModal");
+                    return;
+                }
+            }
+            
+            // If no building placement or hero click, move heroes to this location
+            gameState.heroes.forEach(hero => {
+                if (hero.isDeployed) {
+                    hero.targetX = clickX;
+                    hero.targetY = clickY;
+                    hero.isMoving = true;
+                }
+            });
+        }
+        
+        // Camera controls
+        document.getElementById('zoomInBtn').addEventListener('click', () => {
+            gameState.camera.targetZoom = Math.min(gameState.camera.targetZoom * 1.2, 2);
+        });
+        
+        document.getElementById('zoomOutBtn').addEventListener('click', () => {
+            gameState.camera.targetZoom = Math.max(gameState.camera.targetZoom * 0.8, 0.5);
+        });
+        
+        document.getElementById('centerBtn').addEventListener('click', () => {
+            // Find headquarters
+            const hq = gameState.buildings.find(b => b.type === 'headquarters');
+            if (hq) {
+                gameState.camera.targetX = hq.x;
+                gameState.camera.targetY = hq.y;
+            }
+        });
+        
+        // Start game button
+        startGameBtn.addEventListener('click', () => {
+            startOverlay.style.display = 'none';
+            gameState.isGameStarted = true;
+            startGameLoop();
+        });
+        
+        // Update resource display
+        function updateResourceDisplay() {
+            document.getElementById('food-count').textContent = gameState.resources.food;
+            document.getElementById('materials-count').textContent = gameState.resources.materials;
+            document.getElementById('energy-count').textContent = gameState.resources.energy;
+            document.getElementById('gold-count').textContent = gameState.resources.gold;
+            document.getElementById('player-level').textContent = gameState.player.level;
+        }
+        
+        // Resource production functions
+        function produceResources(deltaTime) {
+            // Convert deltaTime from ms to seconds for resource calculations
+            const seconds = deltaTime / 1000;
+            
+            // Base production rates per second
+            let foodRate = 0.5;
+            let materialsRate = 0.3;
+            let energyRate = 0.2;
+            
+            // Increase rates based on buildings
+            gameState.buildings.forEach(building => {
+                if (building.type === 'farm') {
+                    foodRate += 0.5 * building.level;
+                } else if (building.type === 'warehouse') {
+                    materialsRate += 0.3 * building.level;
+                } else if (building.type === 'powerPlant') {
+                    energyRate += 0.4 * building.level;
+                }
+            });
+            
+            // Apply research bonuses
+            if (gameState.research.agriculture.unlocked) {
+                foodRate *= (1 + 0.1 * gameState.research.agriculture.level);
+            }
+            
+            if (gameState.research.construction.unlocked) {
+                materialsRate *= (1 + 0.1 * gameState.research.construction.level);
+            }
+            
+            if (gameState.research.energy.unlocked) {
+                energyRate *= (1 + 0.1 * gameState.research.energy.level);
+            }
+            
+            // At night, production is reduced
+            if (!gameState.dayNight.isDayTime) {
+                foodRate *= 0.5;
+                materialsRate *= 0.7;
+                energyRate *= 0.8;
+            }
+            
+            // Update resources
+            gameState.resources.food += foodRate * seconds;
+            gameState.resources.materials += materialsRate * seconds;
+            gameState.resources.energy += energyRate * seconds;
+            
+            // Round to whole numbers for display
+            gameState.resources.food = Math.floor(gameState.resources.food);
+            gameState.resources.materials = Math.floor(gameState.resources.materials);
+            gameState.resources.energy = Math.floor(gameState.resources.energy);
+        }
+        
+        // Day/night cycle
+        function updateDayNightCycle(deltaTime) {
+            gameState.dayNight.currentTime += deltaTime / 1000;
+            
+            if (gameState.dayNight.currentTime >= gameState.dayNight.dayLength) {
+                gameState.dayNight.currentTime = 0;
+                gameState.dayNight.isDayTime = !gameState.dayNight.isDayTime;
+                gameState.dayNight.cycle++;
+                
+                if (gameState.dayNight.isDayTime) {
+                    document.getElementById('day-night-icon').className = 'fas fa-sun';
+                    document.getElementById('day-night-text').textContent = `Day ${Math.floor(gameState.dayNight.cycle / 2) + 1}`;
+                    showNotification("Day has begun. Resource production increased.");
+                    
+                    // Zombies less likely during day
+                    gameState.zombieSpawnRate = 8000;
+                } else {
+                    document.getElementById('day-night-icon').className = 'fas fa-moon';
+                    document.getElementById('day-night-text').textContent = `Night ${Math.floor(gameState.dayNight.cycle / 2) + 1}`;
+                    showNotification("Night has fallen. Be careful, more zombies will appear!");
+                    
+                    // Zombies more likely at night
+                    gameState.zombieSpawnRate = 3000;
+                }
+            }
+        }
+        
+        // Spawn zombies
+        function spawnZombies(currentTime) {
+            if (currentTime - gameState.lastZombieSpawn > gameState.zombieSpawnRate) {
+                gameState.lastZombieSpawn = currentTime;
+                
+                // Determine spawn position (outside visible area)
+                const spawnRadius = Math.max(gameCanvas.width, gameCanvas.height) * 0.7;
+                const spawnAngle = Math.random() * Math.PI * 2;
+                const spawnX = gameState.camera.x + Math.cos(spawnAngle) * spawnRadius;
+                const spawnY = gameState.camera.y + Math.sin(spawnAngle) * spawnRadius;
+                
+                // Random zombie type
+                const zombieTypes = ['regular', 'runner', 'brute'];
+                const zombieType = zombieTypes[Math.floor(Math.random() * zombieTypes.length)];
+                
+                let health, damage, speed, icon;
+                switch(zombieType) {
+                    case 'runner':
+                        health = 50;
+                        damage = 10;
+                        speed = 1.5;
+                        icon = '';
+                        break;
+                    case 'brute':
+                        health = 200;
+                        damage = 25;
+                        speed = 0.5;
+                        icon = '';
+                        break;
+                    default: // regular
+                        health = 100;
+                        damage = 15;
+                        speed = 0.8;
+                        icon = '';
+                }
+                
+                gameState.zombies.push({
+                    type: zombieType,
+                    x: spawnX,
+                    y: spawnY,
+                    health: health,
+                    maxHealth: health,
+                    damage: damage,
+                    speed: speed,
+                    target: null,
+                    icon: icon,
+                    lastAttack: 0,
+                    attackCooldown: 1000
+                });
+            }
+        }
+        
+        // Update zombie behavior
+        function updateZombies(currentTime, deltaTime) {
+            for (let i = gameState.zombies.length - 1; i >= 0; i--) {
+                const zombie = gameState.zombies[i];
+                
+                // Find nearest target (building or hero)
+                let nearestDistance = Infinity;
+                zombie.target = null;
+                
+                // Check buildings
+                gameState.buildings.forEach(building => {
+                    const distance = Math.sqrt(Math.pow(building.x - zombie.x, 2) + Math.pow(building.y - zombie.y, 2));
+                    if (distance < nearestDistance) {
+                        nearestDistance = distance;
+                        zombie.target = building;
+                    }
+                });
+                
+                // Check heroes
+                gameState.heroes.forEach(hero => {
+                    if (hero.isDeployed && hero.health > 0) {
+                        const distance = Math.sqrt(Math.pow(hero.x - zombie.x, 2) + Math.pow(hero.y - zombie.y, 2));
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            zombie.target = hero;
+                        }
+                    }
+                });
+                
+                // Move toward target
+                if (zombie.target) {
+                    const distanceToTarget = Math.sqrt(Math.pow(zombie.target.x - zombie.x, 2) + Math.pow(zombie.target.y - zombie.y, 2));
+                    
+                    if (distanceToTarget > 40) {
+                        // Move toward target
+                        const directionX = (zombie.target.x - zombie.x) / distanceToTarget;
+                        const directionY = (zombie.target.y - zombie.y) / distanceToTarget;
+                        
+                        zombie.x += directionX * zombie.speed * (deltaTime / 16); // normalize by 16ms frame time
+                        zombie.y += directionY * zombie.speed * (deltaTime / 16);
+                    } else {
+                        // Attack target
+                        if (currentTime - zombie.lastAttack > zombie.attackCooldown) {
+                            zombie.lastAttack = currentTime;
+                            zombie.target.health -= zombie.damage;
+                            
+                            // Show damage animation
+                            showDamage(zombie.target.x, zombie.target.y, zombie.damage);
+                            
+                            // Check if target destroyed
+                            if (zombie.target.health <= 0) {
+                                if (zombie.target.type) {
+                                    // It's a building
+                                    const buildingIndex = gameState.buildings.findIndex(b => b === zombie.target);
+                                    if (buildingIndex !== -1) {
+                                        gameState.buildings.splice(buildingIndex, 1);
+                                        showNotification("A building has been destroyed!");
+                                    }
+                                } else {
+                                    // It's a hero
+                                    zombie.target.isDeployed = false;
+                                    showNotification(`${zombie.target.name} has been defeated!`);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Check if zombie is killed
+                if (zombie.health <= 0) {
+                    gameState.zombies.splice(i, 1);
+                    
+                    // Award player
+                    gameState.resources.gold += 5;
+                    gameState.player.experience += 20;
+                    
+                    // Update mission progress
+                    if (!gameState.missions.defend.completed) {
+                        gameState.missions.defend.progress++;
+                        if (gameState.missions.defend.progress >= gameState.missions.defend.target) {
+                            gameState.missions.defend.completed = true;
+                            showNotification("Mission completed: Defend the Gate");
+                            gameState.resources.gold += 200;
+                            
+                            // Award hero XP or other rewards here
+                            gameState.heroes.forEach(hero => {
+                                if (hero.isDeployed) {
+                                    // Simplified XP system
+                                    hero.level += 1;
+                                    hero.attack += 5;
+                                    hero.maxHealth += 20;
+                                    hero.health = hero.maxHealth;
+                                }
+                            });
+                        }
+                    }
+                    
+                    updateResourceDisplay();
+                }
+            }
+        }
+        
+        // Update hero behavior
+        function updateHeroes(deltaTime) {
+            gameState.heroes.forEach(hero => {
+                if (hero.isDeployed && hero.health > 0 && hero.isMoving) {
+                    if (hero.targetX !== null && hero.targetY !== null) {
+                        const distanceToTarget = Math.sqrt(Math.pow(hero.targetX - hero.x, 2) + Math.pow(hero.targetY - hero.y, 2));
+                        
+                        if (distanceToTarget > 5) {
+                            // Move toward target
+                            const directionX = (hero.targetX - hero.x) / distanceToTarget;
+                            const directionY = (hero.targetY - hero.y) / distanceToTarget;
+                            
+                            hero.x += directionX * (hero.speed * 0.1) * (deltaTime / 16);
+                            hero.y += directionY * (hero.speed * 0.1) * (deltaTime / 16);
+                        } else {
+                            // Reached target
+                            hero.isMoving = false;
+                            hero.targetX = null;
+                            hero.targetY = null;
+                        }
+                    }
+                }
+                
+                // Hero auto-attacks nearby zombies
+                if (hero.isDeployed && hero.health > 0) {
+                    let nearestZombie = null;
+                    let nearestDistance = 100; // Attack range
+                    
+                    gameState.zombies.forEach(zombie => {
+                        const distance = Math.sqrt(Math.pow(zombie.x - hero.x, 2) + Math.pow(zombie.y - hero.y, 2));
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            nearestZombie = zombie;
+                        }
+                    });
+                    
+                    if (nearestZombie) {
+                        // Hero attacks zombie
+                        nearestZombie.health -= hero.attack * (deltaTime / 1000);
+                        
+                        // Show attack animation
+                        hero.element?.classList.add('attack-animation');
+                        setTimeout(() => {
+                            hero.element?.classList.remove('attack-animation');
+                        }, 500);
+                        
+                        // Show damage
+                        if (Math.random() < 0.05) { // Don't show every damage tick
+                            showDamage(nearestZombie.x, nearestZombie.y, Math.floor(hero.attack * (deltaTime / 1000)));
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Show damage text animation
+        function showDamage(x, y, amount) {
+            const damageElement = document.createElement('div');
+            damageElement.className = 'damage-text';
+            damageElement.textContent = amount;
+            damageElement.style.left = `${x}px`;
+            damageElement.style.top = `${y}px`;
+            gameContainer.appendChild(damageElement);
+            
+            setTimeout(() => {
+                gameContainer.removeChild(damageElement);
+            }, 1000);
+        }
+        
+        // Update player level
+        function updatePlayerLevel() {
+            if (gameState.player.experience >= gameState.player.nextLevelExp) {
+                gameState.player.level++;
+                gameState.player.experience -= gameState.player.nextLevelExp;
+                gameState.player.nextLevelExp = Math.floor(gameState.player.nextLevelExp * 1.5);
+                
+                showNotification(`Level up! You are now level ${gameState.player.level}`);
+                
+                // Bonus resources on level up
+                gameState.resources.food += 100 * gameState.player.level;
+                gameState.resources.materials += 75 * gameState.player.level;
+                gameState.resources.energy += 50 * gameState.player.level;
+                gameState.resources.gold += 25 * gameState.player.level;
+                
+                updateResourceDisplay();
+            }
+        }
+        
+        // Draw functions
+        function drawBackground() {
+            // Clear canvas
+            ctx.fillStyle = gameState.dayNight.isDayTime ? '#7ec850' : '#264026';
+            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            
+            // Draw grid
+            const gridSize = 50;
+            const offsetX = gameState.camera.x % gridSize;
+            const offsetY = gameState.camera.y % gridSize;
+            
+            ctx.strokeStyle = gameState.dayNight.isDayTime ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            
+            // Vertical grid lines
+            for (let x = -offsetX; x < gameCanvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, gameCanvas.height);
+                ctx.stroke();
+            }
+            
+            // Horizontal grid lines
+            for (let y = -offsetY; y < gameCanvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(gameCanvas.width, y);
+                ctx.stroke();
+            }
+        }
+        
+        function drawBuildings() {
+            gameState.buildings.forEach(building => {
+                // Calculate screen position
+                const screenX = (building.x - gameState.camera.x) * gameState.camera.zoom + gameCanvas.width / 2;
+                const screenY = (building.y - gameState.camera.y) * gameState.camera.zoom + gameCanvas.height / 2;
+                
+                // Draw building
+                ctx.fillStyle = '#555';
+                const size = 40 * gameState.camera.zoom;
+                ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
+                
+                // Draw building icon
+                ctx.font = `${20 * gameState.camera.zoom}px Arial`;
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(building.icon, screenX, screenY);
+                
+                // Draw health bar
+                const healthBarWidth = 40 * gameState.camera.zoom;
+                const healthBarHeight = 5 * gameState.camera.zoom;
+                const healthPercent = building.health / building.maxHealth;
+                
+                ctx.fillStyle = '#333';
+                ctx.fillRect(screenX - healthBarWidth/2, screenY + size/2 + 5, healthBarWidth, healthBarHeight);
+                
+                ctx.fillStyle = healthPercent > 0.5 ? '#4CAF50' : healthPercent > 0.25 ? '#FFC107' : '#F44336';
+                ctx.fillRect(screenX - healthBarWidth/2, screenY + size/2 + 5, healthBarWidth * healthPercent, healthBarHeight);
+                
+                // Draw level indicator
+                ctx.fillStyle = 'white';
+                ctx.font = `${12 * gameState.camera.zoom}px Arial`;
+                ctx.fillText(`Lv.${building.level}`, screenX, screenY + size/2 + 15 * gameState.camera.zoom);
+            });
+        }
+        
+        function drawHeroes() {
+            gameState.heroes.forEach(hero => {
+                if (hero.isDeployed && hero.health > 0) {
+                    // Calculate screen position
+                    const screenX = (hero.x - gameState.camera.x) * gameState.camera.zoom + gameCanvas.width / 2;
+                    const screenY = (hero.y - gameState.camera.y) * gameState.camera.zoom + gameCanvas.height / 2;
+                    
+                    // Draw hero
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, 25 * gameState.camera.zoom, 0, Math.PI * 2);
+                    ctx.fillStyle = '#2c7cb0';
+                    ctx.fill();
+                    
+                    // Draw hero icon
+                    ctx.font = `${20 * gameState.camera.zoom}px Arial`;
+                    ctx.fillStyle = 'white';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(hero.icon, screenX, screenY);
+                    
+                    // Draw health bar
+                    const healthBarWidth = 40 * gameState.camera.zoom;
+                    const healthBarHeight = 5 * gameState.camera.zoom;
+                    const healthPercent = hero.health / hero.maxHealth;
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(screenX - healthBarWidth/2, screenY + 25 * gameState.camera.zoom + 5, healthBarWidth, healthBarHeight);
+                    
+                    ctx.fillStyle = healthPercent > 0.5 ? '#4CAF50' : healthPercent > 0.25 ? '#FFC107' : '#F44336';
+                    ctx.fillRect(screenX - healthBarWidth/2, screenY + 25 * gameState.camera.zoom + 5, healthBarWidth * healthPercent, healthBarHeight);
+                    
+                    // Draw level indicator
+                    ctx.fillStyle = 'white';
+                    ctx.font = `${12 * gameState.camera.zoom}px Arial`;
+                    ctx.fillText(`Lv.${hero.level}`, screenX, screenY + 25 * gameState.camera.zoom + 15 * gameState.camera.zoom);
+                }
+            });
+        }
+        
+        function drawZombies() {
+            gameState.zombies.forEach(zombie => {
+                // Calculate screen position
+                const screenX = (zombie.x - gameState.camera.x) * gameState.camera.zoom + gameCanvas.width / 2;
+                const screenY = (zombie.y - gameState.camera.y) * gameState.camera.zoom + gameCanvas.height / 2;
+                
+                // Draw zombie
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, 20 * gameState.camera.zoom, 0, Math.PI * 2);
+                ctx.fillStyle = '#b30000';
+                ctx.fill();
+                
+                // Draw zombie icon
+                ctx.font = `${16 * gameState.camera.zoom}px Arial`;
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(zombie.icon, screenX, screenY);
+                
+                // Draw health bar
+                const healthBarWidth = 30 * gameState.camera.zoom;
+                const healthBarHeight = 4 * gameState.camera.zoom;
+                const healthPercent = zombie.health / zombie.maxHealth;
+                
+                ctx.fillStyle = '#333';
+                ctx.fillRect(screenX - healthBarWidth/2, screenY + 20 * gameState.camera.zoom + 5, healthBarWidth, healthBarHeight);
+                
+                ctx.fillStyle = '#F44336';
+                ctx.fillRect(screenX - healthBarWidth/2, screenY + 20 * gameState.camera.zoom + 5, healthBarWidth * healthPercent, healthBarHeight);
+            });
+        }
+        
+        function drawPlacementPreview() {
+            if (gameState.isPlacingBuilding) {
+                // Get mouse position
+                const mouseX = (event.clientX - gameCanvas.getBoundingClientRect().left) / gameState.camera.zoom + gameState.camera.x - gameCanvas.width / 2 / gameState.camera.zoom;
+                const mouseY = (event.clientY - gameCanvas.getBoundingClientRect().top) / gameState.camera.zoom + gameState.camera.y - gameCanvas.height / 2 / gameState.camera.zoom;
+                
+                // Calculate screen position
+                const screenX = (mouseX - gameState.camera.x) * gameState.camera.zoom + gameCanvas.width / 2;
+                const screenY = (mouseY - gameState.camera.y) * gameState.camera.zoom + gameCanvas.height / 2;
+                
+                // Draw preview
+                ctx.fillStyle = 'rgba(100, 200, 100, 0.5)';
+                const size = 40 * gameState.camera.zoom;
+                ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
+                
+                // Draw building type
+                ctx.font = `${16 * gameState.camera.zoom}px Arial`;
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(gameState.currentBuildingType, screenX, screenY);
+            }
+        }
+        
+        // Game loop
+        let lastTime = 0;
+        
+        function gameLoop(currentTime) {
+            if (!lastTime) lastTime = currentTime;
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            if (!gameState.isGameStarted) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            // Update game state
+            updateCamera(deltaTime);
+            produceResources(deltaTime);
+            updateDayNightCycle(deltaTime);
+            spawnZombies(currentTime);
+            updateZombies(currentTime, deltaTime);
+            updateHeroes(deltaTime);
+            updatePlayerLevel();
+            updateResourceDisplay();
+            
+            // Draw game
+            drawBackground();
+            drawBuildings();
+            drawHeroes();
+            drawZombies();
+            drawPlacementPreview();
+            
+            // Track game time
+            gameState.gameTime += deltaTime;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function updateCamera(deltaTime) {
+            // Smooth camera movement
+            gameState.camera.x += (gameState.camera.targetX - gameState.camera.x) * gameState.camera.speed;
+            gameState.camera.y += (gameState.camera.targetY - gameState.camera.y) * gameState.camera.speed;
+            gameState.camera.zoom += (gameState.camera.targetZoom - gameState.camera.zoom) * gameState.camera.speed;
+        }
+        
+        function startGameLoop() {
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Track mouse position for building placement
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        gameCanvas.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+        
+        // Keyboard controls
+        window.addEventListener('keydown', (event) => {
+            const moveAmount = 20 / gameState.camera.zoom;
+            
+            switch (event.key) {
+                case 'ArrowUp':
+                case 'w':
+                    gameState.camera.targetY -= moveAmount;
+                    break;
+                case 'ArrowDown':
+                case 's':
+                    gameState.camera.targetY += moveAmount;
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                    gameState.camera.targetX -= moveAmount;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    gameState.camera.targetX += moveAmount;
+                    break;
+                case 'Escape':
+                    if (gameState.isPlacingBuilding) {
+                        gameState.isPlacingBuilding = false;
+                        gameState.currentBuildingType = null;
+                        showNotification("Building placement cancelled");
+                    } else {
+                        closeAllModals();
+                    }
+                    break;
+            }
+        });
+        
+        // Implement touch controls for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
+        gameCanvas.addEventListener('touchstart', (event) => {
+            if (event.touches.length === 1) {
+                touchStartX = event.touches[0].clientX;
+                touchStartY = event.touches[0].clientY;
+            }
+        });
+        
+        gameCanvas.addEventListener('touchmove', (event) => {
+            if (event.touches.length === 1) {
+                const touchX = event.touches[0].clientX;
+                const touchY = event.touches[0].clientY;
+                
+                const deltaX = touchX - touchStartX;
+                const deltaY = touchY - touchStartY;
+                
+                gameState.camera.targetX -= deltaX / gameState.camera.zoom;
+                gameState.camera.targetY -= deltaY / gameState.camera.zoom;
+                
+                touchStartX = touchX;
+                touchStartY = touchY;
+                
+                event.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
